@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.types import InputFile
 from aiogram.enums.parse_mode import ParseMode
-from aiohttp import web          # только для открытия порта 8080
+from aiogram.client.default import DefaultBotProperties   # ⭐ добавили
+from aiohttp import web
 
 # ---------- 1. 40 предсказаний + 20 советов ----------
 PRED = [
@@ -153,7 +154,7 @@ ZODIAC_PICS = [
 async def health(request):
     return web.Response(text="OK")
 
-# ---------- регистрация хэндлеров (после создания dp) ----------
+# ---------- регистрация хэндлеров ----------
 def register_handlers(dp: Dispatcher):
     dp.message.register(cmd_help, F.text == "/help")
     dp.message.register(start, F.text == "/start")
