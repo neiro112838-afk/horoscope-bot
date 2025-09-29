@@ -274,7 +274,7 @@ async def start(m: types.Message):
           for i, z in enumerate(ZODIACS)]
     await m.answer("🌟 Выбери свой знак:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb))
 
-async def horo(c: types.CallbackBack):
+async def horo(c: types.CallbackQuery):
     z_idx = int(c.data.split("_")[1])
     zodiac = ZODIACS[z_idx]
     text = f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>"
