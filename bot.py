@@ -233,6 +233,30 @@ def lunar_calendar_month(start: datetime):
         cal.append((dt, day, phase))
     return cal
 
+# ---------- русские названия фаз ----------
+RU_PHASE = {
+    "New": "Новолуние",
+    "Waxing Crescent": "Молодая Луна",
+    "First Quarter": "Первая четверть",
+    "Waxing Gibbous": "Прибывающая Луна",
+    "Full": "Полнолуние",
+    "Waning Gibbous": "Убывающая Луна",
+    "Last Quarter": "Последняя четверть",
+    "Waning Crescent": "Старая Луна",
+}
+
+# ---------- команда /moon ----------
+async def cmd_moon(m: types.Message):
+    day, phase_en = get_today_lunar()
+    phase_ru = RU_PHASE.get(phase_en, phase_en)
+    text = (
+        f"🌙 <b>Луна сегодня</b>\n\n"
+        f"Лунный день: <b>{day}</b> (из 30)\n"
+        f"Фаза: <b>{phase_ru}</b>\n\n"
+        f"Совет: {PERSONAL_MOON_ADV.get(day, 'Слушайте свою интуицию.')}"
+    )
+    await m.answer(text, parse_mode=ParseMode.HTML)
+  
 # ================== ЛУННЫЕ КОМАНДЫ ==================
 async def cmd_lunarbio(m: types.Message):
     await m.answer(
@@ -286,6 +310,7 @@ def register_handlers(dp: Dispatcher):
     dp.message.register(start, F.text == "/start")
     dp.message.register(subscribe, F.text == "/subscribe")
     dp.message.register(unsubscribe, F.text == "/unsubscribe")
+    dp.message.register(cmd_moon, F.text == "/moon")
     dp.message.register(cmd_lunarbio, F.text == "/lunarbio")
     dp.message.register(get_birth_luna, F.text.regexp(r"^\d{2}\.\d{2}\.\d{4}$"))
     dp.message.register(cmd_mooncal, F.text == "/mooncal")
