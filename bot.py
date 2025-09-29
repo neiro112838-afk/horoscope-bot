@@ -241,7 +241,6 @@ async def cmd_lunarbio(m: types.Message):
         parse_mode=ParseMode.HTML
     )
 
-@dp.message(F.text.regexp(r"^\d{2}\.\d{2}\.\d{4}$"))
 async def get_birth_luna(m: types.Message):
     try:
         birth = datetime.strptime(m.text, "%d.%m.%Y")
