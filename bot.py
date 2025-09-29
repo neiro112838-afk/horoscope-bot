@@ -1,16 +1,21 @@
+#!/usr/bin/env python3
 import os
 import random
 import asyncio
 from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.types import InputFile
-from aiohttp import web
+from aiogram.enums.parse_mode import ParseMode
+from aiohttp import web          # только для открытия порта 8080
 
-# ---------- 1. 40 разных предсказаний и 20 советов ----------
+# ---------- 1. 40 предсказаний + 20 советов ----------
 PRED = [
-    "Сегодня удача на твоей стороне!",
-    "Избегай крупных трат — завтра будут важные покупки.",
-    "Встретишь человека, который поменяет твои планы в лучшую сторону.",
+    "Сегодня звёзды советуют действовать смело — удача на твоей стороне.",
+    "Неблагоприятный день для крупных трат; лучше подумать трижды.",
+    "Встреча, которую ты ждёшь, произойдёт раньше, чем ожидаешь.",
+    "Не откладывай дела «на потом» — завтра может быть поздно.",
+    "Тебя ждёт приятный сюрприз от человека, которого ты недооцениваешь.",
+    "Энергия дня — на стороне творчества: попробуй что-то новое.",
     "Утро начни с чашки воды — энергия повысится.",
     "Не откладывай звонок, который давно хочешь сделать.",
     "Вечером получишь приятную новость.",
@@ -48,7 +53,7 @@ PRED = [
     "Сделай комплимент коллеге — улучшится атмосфера.",
     "Сегодня удачный день для покупки билетов.",
     "Не переедай на ночь — сон будет крепче.",
-    "Постарайся улыбаться чаще — люди ответят тем же."
+    "Постарайся улыбаться чаще — люди ответят тем же.",
 ]
 
 ADV = [
@@ -71,29 +76,28 @@ ADV = [
     "Совет: отложи телефон за 30 мин до сна.",
     "Совет: улыбнись себе в зеркало.",
     "Совет: помоги кому-то без ожидания награды.",
-    "Совет: начни утро со стакана тёплой воды."
+    "Совет: начни утро со стакана тёплой воды.",
 ]
 
-# ---------- 2. Красивые русские знаки ----------
-ZODIACS = ["♈ Овен","♉ Телец","♊ Близнецы","♋ Рак","♌ Лев","♍ Дева",
-           "♎ Весы","♏ Скорпион","♐ Стрелец","♑ Козерог","♒ Водолей","♓ Рыбы"]
-
-bot = Bot(os.getenv("TOKEN"))
-dp  = Dispatcher()
+# ---------- 2. Русские названия знаков ----------
+ZODIACS = ["♈ Овен", "♉ Телец", "♊ Близнецы", "♋ Рак",
+           "♌ Лев", "♍ Дева", "♎ Весы", "♏ Скорпион",
+           "♐ Стрелец", "♑ Козерог", "♒ Водолей", "♓ Рыбы"]
 
 # ---------- 3. Команда /help ----------
 @dp.message(F.text == "/help")
-async def help_msg(m: types.Message):
+async def cmd_help(m: types.Message):
     await m.answer(
         "🌟 <b>Привет!</b>\n\n"
         "Я присылаю короткий гороскоп и полезный совет на день.\n"
         "Нажми /start и выбери свой знак зодиака.\n\n"
         "Каждое утро можно подписаться на автоматическую рассылку – команда /subscribe",
-        parse_mode="HTML"
+        parse_mode=ParseMode.HTML
     )
 
 # ---------- 4. Подписка «каждое утро» ----------
-USERS_DB = set()          # {user_id, ...}  (в продакшене лучше SQLite/Redis)
+USERS_DB = set()                      # {user_id, ...}  (в продакшене лучше SQLite)
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))   # кто получит отчёт о рассылке
 
 @dp.message(F.text == "/subscribe")
 async def subscribe(m: types.Message):
@@ -107,18 +111,20 @@ async def unsubscribe(m: types.Message):
 
 async def send_daily():
     """Генерирует и рассылает гороскопы в 8:00 МСК каждый день."""
-    await bot.send_message(chat_id=admin_id, text="📢 Рассылаю утренние гороскопы...")
+    if ADMIN_ID:
+        await bot.send_message(ADMIN_ID, f"📢 Рассылаю утренние гороскопы ({len(USERS_DB)} чел.)…")
     for uid in USERS_DB:
         try:
-            zodiac = random.choice(ZODIACS)          # можно хранить в БД
+            zodiac = random.choice(ZODIACS)
             await bot.send_message(
                 uid,
-                f"{zodiac}\n🔮 {random.choice(PRED)}\n💡 {random.choice(ADV)}",
-                parse_mode="HTML"
+                f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>",
+                parse_mode=ParseMode.HTML
             )
         except Exception as e:
             print(f"Не удалось отправить {uid}: {e}")
-    await bot.send_message(chat_id=admin_id, text="📬 Рассылка завершена.")
+    if ADMIN_ID:
+        await bot.send_message(ADMIN_ID, "📬 Рассылка завершена.")
 
 async def scheduler():
     """Планировщик: ждём 8:00 МСК и запускаем send_daily()."""
@@ -127,13 +133,11 @@ async def scheduler():
         next_8 = now.replace(hour=8, minute=0, second=0, microsecond=0)
         if now >= next_8:
             next_8 += timedelta(days=1)
-        sleep_seconds = (next_8 - now).total_seconds()
-        await asyncio.sleep(sleep_seconds)
+        await asyncio.sleep((next_8 - now).total_seconds())
         await send_daily()
 
-# ---------- 5. Картинка к каждому знаку ----------
-# Положи 12 файлов 1.jpg..12.jpg в папку /pics репозитория, либо используй прямые URL.
-# Ниже пример: ссылки на красивые небесные фоны (бесплатно, без копирайта).
+# ---------- 5. Красивые картинки ----------
+# Бесплатные ссылки на обои для каждого знака (можно заменить свои)
 ZODIAC_PICS = [
     "https://i.ibb.co/6y4qVGW/1.jpg",  # Овен
     "https://i.ibb.co/P9rV8Yt/2.jpg",  # Телец
@@ -149,6 +153,9 @@ ZODIAC_PICS = [
     "https://i.ibb.co/z5vJ0Yc/12.jpg"  # Рыбы
 ]
 
+bot = Bot(token=os.environ["TOKEN"], default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+dp  = Dispatcher()
+
 @dp.message(F.text == "/start")
 async def start(m: types.Message):
     kb = [[types.InlineKeyboardButton(text=z, callback_data=f"z_{i}")]
@@ -157,33 +164,36 @@ async def start(m: types.Message):
 
 @dp.callback_query(F.data.startswith("z_"))
 async def horo(c: types.CallbackQuery):
-    z_idx = int(c.data.split("_")[1])
+    z_idx  = int(c.data.split("_")[1])
     zodiac = ZODIACS[z_idx]
-    pred   = random.choice(PRED)
-    adv    = random.choice(ADV)
     pic    = ZODIAC_PICS[z_idx]
-
     await c.message.answer_photo(
         photo=pic,
-        caption=f"{zodiac}\n🔮 <b>{pred}</b>\n💡 <b>{adv}</b>",
-        parse_mode="HTML"
+        caption=f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>",
+        parse_mode=ParseMode.HTML
     )
     await c.answer()
 
-# ---------- веб-заглушка (для Render) ----------
-async def dummy(request):
-    return web.Response(text="Bot is running")
+# ---------- единственный энд-поинт для Web Service ----------
+async def health(request):
+    return web.Response(text="OK")
 
-app = web.Application()
-app.router.add_get("/", dummy)
-
-async def on_startup(app):
-    # запускаем планировщик в фоне
-    asyncio.create_task(scheduler())
-    # и polling-бота
+# ---------- запуск ----------
+async def on_startup(app: web.Application):
+    # фоновый polling + планировщик
     asyncio.create_task(dp.start_polling(bot))
+    asyncio.create_task(scheduler())
 
-app.on_startup.append(on_startup)
+async def web_main():
+    app = web.Application()
+    app.router.add_get("/", health)      # «сердцебиение» для Render
+    app.on_startup.append(on_startup)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 8080)))
+    await site.start()
+    # работаем вечно
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
-    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+    asyncio.run(web_main())
