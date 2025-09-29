@@ -8,7 +8,7 @@ from aiogram.types import InputFile
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiohttp import web
-import httpx
+import  httpx
 
 # ================== 1. 40 предсказаний + 20 советов ==================
 PRED = [
