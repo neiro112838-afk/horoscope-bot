@@ -165,21 +165,21 @@ def lunar_day_and_phase(dt: datetime):
     age = moon_age(dt)
     day = int(age) + 1
     if age < 1.845:
-        phase = "New"
+        phase = "Новолуние"
     elif age < 5.53:
-        phase = "Waxing Crescent"
+        phase = "Растущий полумесяц"
     elif age < 9.22:
-        phase = "First Quarter"
+        phase = "Первая четверть"
     elif age < 12.91:
-        phase = "Waxing Gibbous"
+        phase = "Растущая луна"
     elif age < 16.59:
-        phase = "Full"
+        phase = "Полнолуние"
     elif age < 20.27:
-        phase = "Waning Gibbous"
+        phase = "Убывающая луна"
     elif age < 23.95:
-        phase = "Last Quarter"
+        phase = "Последняя четверть"
     else:
-        phase = "Waning Crescent"
+        phase = "Убывающий полумесяц"
     return day, phase
  
 PERSONAL_MOON_ADV = {
