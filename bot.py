@@ -170,20 +170,3 @@ async def horo(c: types.CallbackQuery):
     )
     await c.answer()
 
-# ---------- веб-заглушка (для Render) ----------
-async def dummy(request):
-    return web.Response(text="Bot is running")
-
-app = web.Application()
-app.router.add_get("/", dummy)
-
-async def on_startup(app):
-    # запускаем планировщик в фоне
-    asyncio.create_task(scheduler())
-    # и polling-бота
-    asyncio.create_task(dp.start_polling(bot))
-
-app.on_startup.append(on_startup)
-
-if __name__ == "__main__":
-    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
