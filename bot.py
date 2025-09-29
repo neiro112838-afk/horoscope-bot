@@ -170,12 +170,8 @@ async def start(m: types.Message):
 async def horo(c: types.CallbackQuery):
     z_idx = int(c.data.split("_")[1])
     zodiac = ZODIACS[z_idx]
-    pic = ZODIAC_PICS[z_idx]
-    await c.message.answer_photo(
-        photo=pic,
-        caption=f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>",
-        parse_mode=ParseMode.HTML
-    )
+    text = f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>"
+    await c.message.answer(text, parse_mode=ParseMode.HTML)
     await c.answer()
 
 # ---------- запуск ----------
