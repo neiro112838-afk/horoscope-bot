@@ -181,7 +181,7 @@ def lunar_day_and_phase(dt: datetime):
     else:
         phase = "Waning Crescent"
     return day, phase
-
+ 
 PERSONAL_MOON_ADV = {
     1: "Сегодня отличный день для новых начинаний – вы родились в день новой Луны.",
     2: "Действуйте спокойно, нарабатывайте ресурс – вы «растущая» Луна.",
