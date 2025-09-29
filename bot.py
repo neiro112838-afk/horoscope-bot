@@ -275,17 +275,12 @@ async def start(m: types.Message):
           for i, z in enumerate(ZODIACS)]
     await m.answer("🌟 Выбери свой знак:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb))
 
-async def horo(c: types.CallbackQuery):
+async def horo(c: types.CallbackBack):
     z_idx = int(c.data.split("_")[1])
     zodiac = ZODIACS[z_idx]
-    pic = ZODIAC_PICS[z_idx]
-    await c.message.answer_photo(
-        photo=pic,
-        caption=f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>",
-        parse_mode=ParseMode.HTML
-    )
+    text = f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>"
+    await c.message.answer(text, parse_mode=ParseMode.HTML)
     await c.answer()
-
 # ================== РЕГИСТРАЦИЯ ==================
 def register_handlers(dp: Dispatcher):
     dp.message.register(cmd_help, F.text == "/help")
