@@ -79,13 +79,12 @@ ADV = [
     "Совет: начни утро со стакана тёплой воды.",
 ]
 
-# ---------- 2. Русские названия знаков ----------
+# ---------- 2. Русские знаки ----------
 ZODIACS = ["♈ Овен", "♉ Телец", "♊ Близнецы", "♋ Рак",
            "♌ Лев", "♍ Дева", "♎ Весы", "♏ Скорпион",
            "♐ Стрелец", "♑ Козерог", "♒ Водолей", "♓ Рыбы"]
 
 # ---------- 3. Команда /help ----------
-@dp.message(F.text == "/help")
 async def cmd_help(m: types.Message):
     await m.answer(
         "🌟 <b>Привет!</b>\n\n"
@@ -96,15 +95,13 @@ async def cmd_help(m: types.Message):
     )
 
 # ---------- 4. Подписка «каждое утро» ----------
-USERS_DB = set()                      # {user_id, ...}  (в продакшене лучше SQLite)
+USERS_DB = set()                      # {user_id, ...}
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))   # кто получит отчёт о рассылке
 
-@dp.message(F.text == "/subscribe")
 async def subscribe(m: types.Message):
     USERS_DB.add(m.from_user.id)
     await m.answer("✅ Подписка оформлена! Каждый день в 8:00 по МСК я пришлю гороскоп.")
 
-@dp.message(F.text == "/unsubscribe")
 async def unsubscribe(m: types.Message):
     USERS_DB.discard(m.from_user.id)
     await m.answer("❌ Рассылка отключена.")
@@ -136,8 +133,7 @@ async def scheduler():
         await asyncio.sleep((next_8 - now).total_seconds())
         await send_daily()
 
-# ---------- 5. Красивые картинки ----------
-# Бесплатные ссылки на обои для каждого знака (можно заменить свои)
+# ---------- 5. Картинки ----------
 ZODIAC_PICS = [
     "https://i.ibb.co/6y4qVGW/1.jpg",  # Овен
     "https://i.ibb.co/P9rV8Yt/2.jpg",  # Телец
@@ -153,20 +149,27 @@ ZODIAC_PICS = [
     "https://i.ibb.co/z5vJ0Yc/12.jpg"  # Рыбы
 ]
 
-bot = Bot(token=os.environ["TOKEN"], default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp  = Dispatcher()
+# ---------- единственный энд-поинт для Web Service ----------
+async def health(request):
+    return web.Response(text="OK")
 
-@dp.message(F.text == "/start")
+# ---------- регистрация хэндлеров (после создания dp) ----------
+def register_handlers(dp: Dispatcher):
+    dp.message.register(cmd_help, F.text == "/help")
+    dp.message.register(start, F.text == "/start")
+    dp.message.register(subscribe, F.text == "/subscribe")
+    dp.message.register(unsubscribe, F.text == "/unsubscribe")
+    dp.callback_query.register(horo, F.data.startswith("z_"))
+
 async def start(m: types.Message):
     kb = [[types.InlineKeyboardButton(text=z, callback_data=f"z_{i}")]
           for i, z in enumerate(ZODIACS)]
     await m.answer("🌟 Выбери свой знак:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb))
 
-@dp.callback_query(F.data.startswith("z_"))
 async def horo(c: types.CallbackQuery):
-    z_idx  = int(c.data.split("_")[1])
+    z_idx = int(c.data.split("_")[1])
     zodiac = ZODIACS[z_idx]
-    pic    = ZODIAC_PICS[z_idx]
+    pic = ZODIAC_PICS[z_idx]
     await c.message.answer_photo(
         photo=pic,
         caption=f"{zodiac}\n🔮 <b>{random.choice(PRED)}</b>\n💡 <b>{random.choice(ADV)}</b>",
@@ -174,13 +177,15 @@ async def horo(c: types.CallbackQuery):
     )
     await c.answer()
 
-# ---------- единственный энд-поинт для Web Service ----------
-async def health(request):
-    return web.Response(text="OK")
-
 # ---------- запуск ----------
+bot: Bot
+
 async def on_startup(app: web.Application):
-    # фоновый polling + планировщик
+    global bot
+    bot = Bot(token=os.environ["TOKEN"], default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    dp = Dispatcher()
+    register_handlers(dp)
+    # фоновые задачи
     asyncio.create_task(dp.start_polling(bot))
     asyncio.create_task(scheduler())
 
@@ -192,8 +197,7 @@ async def web_main():
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 8080)))
     await site.start()
-    # работаем вечно
-    await asyncio.Event().wait()
+    await asyncio.Event().wait()         # работаем вечно
 
 if __name__ == "__main__":
     asyncio.run(web_main())
