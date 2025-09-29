@@ -1,22 +1,24 @@
-import os, random, asyncio
+import os
+import random
+import asyncio
 from aiogram import Bot, Dispatcher, F, types
 
-ZODIACS = ["♈ Овен","♉ Телец","♊ Близнецы","♋ Рак","♌ Лев","♍ Дева",
-           "♎ Весы","♏ Скорпион","♐ Стрелец","♑ Козерог","♒ Водолей","♓ Рыбы"]
-PRED = ["Сегодня удача на твоей стороне!",
-        "Избегай крупных трат — завтра будут важные покупки.",
-        "Встретишь человека, который поменяет твои планы в лучшую сторону."]
-ADV  = ["Совет: выпей стакан воды и улыбнись.",
-        "Совет: прогуляйся 20 минут без телефона."]
+ZODIACS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+           "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+PRED = ["Today luck is on your side!",
+        "Avoid big spends today — important purchases tomorrow.",
+        "You will meet a person who changes your plans for the better."]
+ADV = ["Tip: drink a glass of water and smile.",
+       "Tip: walk for 20 minutes without your phone."]
 
-bot = Bot(os.getenv("TOKEN"))
-dp  = Dispatcher()
+bot = Bot(token=os.environ["TOKEN"])
+dp = Dispatcher()
 
 @dp.message(F.text == "/start")
 async def start(m: types.Message):
-    kb = [[types.InlineKeyboardButton(text=z,callback_data=f"z_{i}")]
-          for i,z in enumerate(ZODIACS)]
-    await m.answer("🌟 Выбери знак:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb))
+    kb = [[types.InlineKeyboardButton(text=z, callback_data=f"z_{i}")]
+          for i, z in enumerate(ZODIACS)]
+    await m.answer("Pick your sign:", reply_markup=types.InlineKeyboardMarkup(inline_keyboard=kb))
 
 @dp.callback_query(F.data.startswith("z_"))
 async def horo(c: types.CallbackQuery):
@@ -24,4 +26,5 @@ async def horo(c: types.CallbackQuery):
     await c.message.answer(f"{z}\n🔮 {random.choice(PRED)}\n💡 {random.choice(ADV)}")
     await c.answer()
 
-asyncio.run(dp.start_polling(bot))
+if __name__ == "__main__":
+    asyncio.run(dp.start_polling(bot))
