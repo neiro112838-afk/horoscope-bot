@@ -4,12 +4,11 @@ import random
 import asyncio
 from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, F, types
-from aiogram.types import InputFile
 from aiogram.enums.parse_mode import ParseMode
-from aiogram.client.default import DefaultBotProperties   # ⭐ добавили
+from aiogram.client.default import DefaultBotProperties
 from aiohttp import web
 
-# ---------- 1. 40 предсказаний + 20 советов ----------
+# ---------------- 40 предсказаний + 20 советов ----------------
 PRED = [
     "Сегодня звёзды советуют действовать смело — удача на твоей стороне.",
     "Неблагоприятный день для крупных трат; лучше подумать трижды.",
@@ -85,7 +84,7 @@ ZODIACS = ["♈ Овен", "♉ Телец", "♊ Близнецы", "♋ Рак
            "♌ Лев", "♍ Дева", "♎ Весы", "♏ Скорпион",
            "♐ Стрелец", "♑ Козерог", "♒ Водолей", "♓ Рыбы"]
 
-# ---------- 3. Команда /help ----------
+# ---------- 3. /help ----------
 async def cmd_help(m: types.Message):
     await m.answer(
         "🌟 <b>Привет!</b>\n\n"
@@ -133,22 +132,6 @@ async def scheduler():
             next_8 += timedelta(days=1)
         await asyncio.sleep((next_8 - now).total_seconds())
         await send_daily()
-
-# ---------- 5. Картинки ----------
-ZODIAC_PICS = [
-    "https://i.ibb.co/6y4qVGW/1.jpg",  # Овен
-    "https://i.ibb.co/P9rV8Yt/2.jpg",  # Телец
-    "https://i.ibb.co/3Wf7cBn/3.jpg",  # Близнецы
-    "https://i.ibb.co/z5vJ0Yc/4.jpg",  # Рак
-    "https://i.ibb.co/3sR5vMg/5.jpg",  # Лев
-    "https://i.ibb.co/7rp4r4Q/6.jpg",  # Дева
-    "https://i.ibb.co/b3F5qMZ/7.jpg",  # Весы
-    "https://i.ibb.co/6ZgFvqY/8.jpg",  # Скорпион
-    "https://i.ibb.co/CK1f6rZ/9.jpg",  # Стрелец
-    "https://i.ibb.co/3sR5vMg/10.jpg", # Козерог
-    "https://i.ibb.co/6y4qVGW/11.jpg", # Водолей
-    "https://i.ibb.co/z5vJ0Yc/12.jpg"  # Рыбы
-]
 
 # ---------- единственный энд-поинт для Web Service ----------
 async def health(request):
